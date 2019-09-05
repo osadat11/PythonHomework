@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>edit</title>
+</head>
+<body>
+    <form action="/update/{{ post.id }}" method="POST">
+        <label for="title">Todo</label>
+        <input type="text" name="title" value="{{ post.title }}">
+        <br>
+        <hr>
+        <label for="content">詳細</label>
+        <textarea name="content" cols="40" rows="10">{{ post.content }}</textarea>
+        <br>
+        <hr>
+        <button type="submit">保存</button>
+        <button type="button" onclick="history.back()">キャンセル</button>
+    
+    </form>
+</body>
+</html>
