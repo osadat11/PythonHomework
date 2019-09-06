@@ -1,3 +1,4 @@
-/webenv2
+/backend/webenv2
 /.vscode
 /backend/__pycache__
+/memo
