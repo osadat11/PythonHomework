@@ -1,14 +1,14 @@
--- DROP TABLE posts;
+-- SQLite
+DROP TABLE tasks
 
--- CREATE TABLE posts (
---     id INTEGER PRIMARY KEY AUTOINCREMENT,
---     done INTEGER DEFAULT 0,
---     title text,
---     date text,
---     time text,
---     content text,
---     tag text
--- );
+CREATE TABLE tasks (
+    id INTEGER PRIMARY KEY,
+    title text,
+    description text,
+    date text,
+    done INTEGER DEFAULT 0,
+    tag text
+)
 
 -- INSERT INTO posts VALUES(
 --     0,
@@ -28,4 +28,4 @@
 --     'test-競プロ'
 -- );
 
-SELECT * FROM posts
+SELECT * FROM tasks
