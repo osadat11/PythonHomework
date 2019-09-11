@@ -1,98 +1,113 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, request, json, jsonify, abort, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from flask_cors import CORS
-
-DEBUG = True
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=True
-app.config['JSON_AS_ASCII'] = False 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-db=SQLAlchemy(app)
-db.create_all()
-
-class Post(db.Model):
-    __tablename__ = "posts"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+class Task(db.Model):
+    __tablename__ = 'tasks'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.Text)
+    description = db.Column(db.Text)
+    date = db.Column(db.Text)
     done = db.Column(db.Integer)
-    title = db.Column(db.Text())
-    date = db.Column(db.Text())
-    time = db.Column(db.Text())
-    content = db.Column(db.Text())
-    tag = db.Column(db.Text())
+    tag = db.Column(db.Text)
+
+    def __repr__(self):
+        return '<Task id={id} title={title} description={des} date={date} done={done} tag={tag}>'.format(
+            id=self.id, title=self.title, des=self.description, date=self.date, done=self.done, tag=self.tag)
+
+    def __init__(self, *args, **kwargs):
+        super(db.Model, self).__init__(*args, **kwargs)
+        self.done = 0
 
     def to_dict(self):
         return {
             "id": self.id,
-            "done": self.done,
             "title": self.title,
+            "description": self.description,
             "date": self.date,
-            "time": self.time,
-            "content": self.content,
+            "done": self.done,
             "tag": self.tag
         }
 
-@app.route("/")
-def index():
-    posts = Post.query.get(1)
+
+@app.route('/')
+def Hello():
+    return 'HelloWorld'
+
+
+@app.route('/tasks', methods=['GET'])
+def list_all_tasks():
     result = {
-        "tasks": [
-            Post.to_dict(post) for post in Post.query.all()
-        ]
+        "tasks": [Task.to_dict(val) for val in Task.query.all()]
     }
+
     return jsonify(result)
 
-# @app.route("/new")
-# def new_post():
-#     return render_template("new.html")
 
-# @app.route("/create", methods=["POST"])
-# def create_post():
-#     new_post = Post()
-#     new_post.done = 0
-#     new_post.title = request.form["title"]
-#     new_post.content = request.form["content"]
-#     new_post.date = str(datetime.today().year) + "-" + str(datetime.today().month) + "-" + str(datetime.today().day)
-#     db.session.add(new_post)
-#     db.session.commit()
-
-#     return redirect(url_for('.index'))
-
-# @app.route("/edit/<int:id>")
-# def edit_post(id):
-#     post=Post.query.get(id)
-#     return render_template("edit.html", post=post)
-
-# @app.route("/update/<int:id>", methods=["POST"])
-# def update_post(id):
-#     post = Post.query.get(id)
-#     post.title = request.form["title"]
-#     post.content = request.form["content"]
-#     post.date = str(datetime.today().year) + "-" + str(datetime.today().month) + "-" + str(datetime.today().day)
-#     db.session.commit()
-#     return redirect(url_for('.index'))
-
-# @app.route("/done/<int:id>", methods=["POST"])
-# def done_post(id):
-#     request_id = str("checkbox-" + str(id))
-#     post = Post.query.get(id)
-#     if request.form.get(request_id):
-#         post.done = 1
-#     else:
-#         post.done = 0
-#     db.session.commit()
-#     return redirect(url_for('.index'))
-
-# @app.route("/delete/<int:id>")
-# def delete_post(id):
-#     post=Post.query.get(id)
-#     db.session.delete(post)
-#     db.session.commit()
-#     posts = Post.query.all()
-#     return redirect(url_for('.index'))
+@app.route('/tasks/<int:taskid>', methods=['GET'])
+def show_task(taskid):
+    task = db.session.query(Task).get(taskid)
+    if task == None:
+        return "404 not found (´・ω・｀)", 404
+    else:
+        res = {
+            "tasks": Task.to_dict(task)
+        }
+        return jsonify(res)
 
 
-if __name__ == '__main__':
-    app.run()
+@app.route('/tasks/<int:taskid>/delete', methods=['DELETE, POST'])
+def delete_task(taskid):
+    task = db.session.query(Task).get(taskid)
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for('tasks')), 204
+
+
+@app.route('/tasks/create', methods=['POST'])
+def create_task():
+    title = request.json["tasks"]["title"]
+    description = request.json["tasks"]["description"]
+    date = request.json["tasks"]["date"]
+    done = 0
+    tag = request.json["tasks"]["tag"]
+
+    new_task = Task(title, description, date, done, tag)
+    db.session.add(new_task)
+    db.session.commit()
+    return redirect(url_for('tasks')), 204
+
+# タスクの更新画面はプレースホルダーに元のデータがあらかじめ入ってるようにする
+@app.route('/tasks/<int:taskid>/edit', methods=['GET'])
+def task_editor_set(taskid):
+    task = db.session.query(Task).get(taskid)
+    res = {
+        "tasks": Task.to_dict(task)
+    }
+    return jsonify(res)
+
+# /tasks/< >/edit でsubmitされた場合 ↓にリダイレクトしてsql更新
+@app.route('/tasks/<int:taskid>/update', methods=['PUT'])
+def update_task(taskid):
+    u_task = db.session.query(Task).get(taskid)
+
+    u_task.title = request.json["tasks"]["title"]
+    u_task.description = request.json["tasks"]["description"]
+    u_task.date = request.json["tasks"]["date"]
+    u_task.done = 0
+    u_task.tag = request.json["tasks"]["tag"]
+
+    db.session.add(u_task)
+    db.session.commit()
+
+    return redirect(url_for('tasks')), 204
+
+
+if __name__ == "__main__":
+    app.run(host='localhost', port=8080, debug=True)
