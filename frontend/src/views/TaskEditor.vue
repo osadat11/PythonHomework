@@ -121,7 +121,7 @@ export default {
         discription: '',
         time:'',
         tag:'',
-        date: new Date().toISOString().substr(0, 10),
+        date: '',
 
         menu2: false,
         tmenu: false,
