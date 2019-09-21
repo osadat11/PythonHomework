@@ -4,7 +4,7 @@
         <v-dialog v-model="dialog" persistent max-width="600px">
             <v-card>
             <v-card-title>
-                <span class="headline">{{ editor }}</span>
+                <span class="display-1 font-weight-bold pa-3">{{ editor }}</span>
             </v-card-title>
             <v-card-text>
                 <v-form v-model="valid">
@@ -22,7 +22,7 @@
                     <v-col cols="12">
                         <v-textarea
                             label="このタスクの詳細"
-                            v-model="discription"
+                            v-model="description"
                             counter="180"
                         ></v-textarea>
                     </v-col>
@@ -101,7 +101,7 @@
             <v-card-actions>
                 <div class="flex-grow-1"></div>
                 <v-btn color="blue darken-1" text @click="closeDialog">Close</v-btn>
-                <v-btn color="blue darken-1" text @click="closeDialog">Save</v-btn>
+                <v-btn v-if="editor == types[1]" color="blue darken-1" text @click="addTask(); closeDialog">Save</v-btn>
             </v-card-actions>
             </v-card>
         </v-dialog>
@@ -123,6 +123,11 @@ export default {
         tag:'',
         date: '',
 
+        types: [
+                'edit',
+                'Add'
+        ],
+
         menu2: false,
         tmenu: false,
         valid: false,
@@ -135,6 +140,31 @@ export default {
     methods: {
         closeDialog(){
             this.$emit('closed');
+        },
+        addTask () {
+            if (this.$refs.form.validate()) {
+                this.snackbar = true
+        }
+            this.$valid.validateAll()
+            const path = 'http://localhost:5000/tasks/add'
+            var title = this.title
+            var description = this.description
+            let params = new URLSearchParams()
+            params.append('title', title.value)
+            params.append('description', description.value)
+            console.log('newTitle : ' + title.value)
+            console.log('newDesc : ' + description.value)
+            title.value = ''
+            description.value = ''
+            // axios.post(path, params)
+            //     .then(response => {
+            //         var task = {'title': titleValue, 'description': descriptionValue}
+            //         this.tasks.unshift(task)
+            //         console.log(response)
+            //     })
+            //     .catch(error => {
+            //         console.log(error)
+            //     })
         }
     },
 }

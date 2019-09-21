@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Test from './components/HelloWorld'
 import Index from './views/index'
 import TEST1 from './components/Test1'
+import NotFound from './views/NotFound'
 
 Vue.use(Router)
 
@@ -23,6 +24,11 @@ export default new Router({
         path: '/test1',
         name: 'test1',
         component: TEST1
+    },
+    {
+        path: '/*',
+        name: 'notfound',
+        component: NotFound
     }
     ]
 })
