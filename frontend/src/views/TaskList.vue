@@ -34,8 +34,8 @@
                             </v-col>
                             <v-list-item v-for="(task, index) in tasks" :key="index">
                                 <v-col cols="1">
-                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 1" input-value="true" @click.stop="checkTask(tasks[index].id)"></v-checkbox>
-                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 0" @click.stop="checkTask(tasks[index].id)"></v-checkbox>
+                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 1" input-value="true" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
+                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 0" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
                                 </v-col>
                                 <v-list-item-content>
                                     <v-row>
@@ -68,7 +68,7 @@
                         </v-container>
                     </v-tab-item>
 
-                    <v-tab-item>
+                    <v-tab-item class="overflow-y-auto">
                         <v-container>
                             <v-list max-height="580">
                                 <v-col cols="12" v-if="msg.doneTaskMessage != empty">
@@ -76,8 +76,8 @@
                                 </v-col>
                             <v-list-item v-for="(task, index) in done" :key="index">
                                 <v-col cols="1">
-                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 1" input-value="true" @click="checkTask(task.id)"></v-checkbox>
-                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 0" @click="checkTask(task.id)"></v-checkbox>
+                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 1" input-value="true" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
+                                    <v-checkbox class="justify-center" color="teal" v-if="task.done == 0" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
                                 </v-col>
                                 <v-list-item-content>
                                     <v-row>
@@ -99,7 +99,7 @@
                                             </v-layout>
                                     </v-col>
                                     <v-list-item-action>
-                                        <v-btn icon @click="showDialog('タスクの編集', index)">
+                                        <v-btn icon @click="showDialog('タスクの編集', index, true)">
                                             <v-icon>mdi-pencil</v-icon>
                                         </v-btn>
                                         <Editor ref="dialog" @updated="getTask()"></Editor>
@@ -202,42 +202,56 @@ export default {
         Editor
     },
     methods: { 
-        showDialog: function (type, set) {
-            if(set==null){
-                this.$refs.dialog[0].open(type)
+        showDialog: function (type, set, done) {
+            if(done == false || done == null){
+                if(set==null){
+                    console.log("Editor : Add mode")
+                    this.$refs.dialog[0].open(type)
             }else{
+                console.log("Editor : Edit mode, list from 'this.tasks'")
                 var base = {
                     'id':this.tasks[set].id,
                     'title':this.tasks[set].title,
                     'due_d':this.tasks[set].due_d,
                     'due_t':this.tasks[set].due_t,
-                    'priority':this.tasks[set].priority
+                    'priority':this.tasks[set].priority,
+                    'description':this.tasks[set].description,
+                    'done':this.tasks[set].done
                 }
-                console.log(base, " ====> edit")
+                console.log("base_task[ id : ", base.id, "] ====> edit")
                 this.$refs.dialog[0].open(type, base)
+            }  
+            }else if(done == true){
+                if(set==null){
+                    console.log("Editor : Add mode(!)")
+                    this.$refs.dialog[0].open(type)
+                }else{
+                    console.log("Editor : Edit mode, list from 'this.done'")
+                    var base = {
+                        'id':this.done[set].id,
+                        'title':this.done[set].title,
+                        'due_d':this.done[set].due_d,
+                        'due_t':this.done[set].due_t,
+                        'priority':this.done[set].priority,
+                        'description':this.done[set].description,
+                        'done':this.done[set].done
+                    }
+                    console.log("done_task[ id : ", base.id, "] ====> edit")
+                    this.$refs.dialog[0].open(type, base)
+                }
             }
         },
         getTask: function(){
             const path = 'http://localhost:5000/api/tasks'
             var self = this
+            this.msg.taskMessage = ""
+            this.msg.doneTaskMessage = ""
             axios.get(path)
             .then(respons => {
+                console.log(respons.data)
                 if(respons.data==null){
                     this.data = {}
                 }
-                console.log(respons.data)
-                if (respons.data.tasks == this.empty){
-                    this.tasks = [
-                        {
-                        }
-                    ]
-                    if (respons.data.msg.msg_done == "None"){
-                        this.msg.doneTaskMessage = "タスクはありません"
-                    }
-                    if (respons.data.msg.msg_task == "None"){
-                        this.msg.taskMessage = "タスクはありません"
-                    }
-                }else{
                     if (respons.data.msg.msg_done == "None"){
                         this.msg.doneTaskMessage = "タスクはありません"
                     }
@@ -246,31 +260,53 @@ export default {
                     }
                     this.done = respons.data.done
                     this.tasks = respons.data.tasks
-                }
-                console.log(respons.data.tasks)
             })
             .catch(error => {
                 console.log(error)
             })
-        },checkTask (terget) {
+        },checkTask (terget, index, done) {
             const path = 'http://localhost:5000/api/tasks/' + String(terget)
-            var modify = {}
-            modify = this.tasks[terget]
+            // modify = this.tasks[index]
+            if(done == false || done == null){
+                var modify = {
+                    'title': this.tasks[index].title,
+                    'dueD': this.tasks[index].due_d,
+                    'dueT': this.tasks[index].due_t,
+                    'priority': this.tasks[index].priority,
+                    'description' : this.tasks[index].description,
+                    'done' : this.tasks[index].done
+                }
+            }else{
+                var modify = {
+                    'title': this.done[index].title,
+                    'dueD': this.done[index].due_d,
+                    'dueT': this.done[index].due_t,
+                    'priority': this.done[index].priority,
+                    'description' : this.done[index].description,
+                    'done' : this.done[index].done
+                }
+            }
             if(modify.done == 0){
                 modify.done = 1
             }else{
                 modify.done = 0
             }
-            console.log(path, modify)
-            // axios.put(path, modify)
-            // .then(response => {
-            //     console.log(response)
-            //     this.getTask()
-            // })
-            // .catch(error => {
-            //     console.log(error, this.id, modify)
-            //     this.getTask()
-            // })
+            // console.log(path, modify)
+            if (typeof modify.description == "undefined"){
+                    modify.description = ""
+                }
+            if (modify.priority == null || modify.done == null){
+                console.error("Integer property is empty or null [input error, 'done' or 'priority']")
+            }
+            axios.put(path, modify)
+            .then(response => {
+                // console.log(response)
+                this.getTask()
+            })
+            .catch(error => {
+                console.log(error, this.id, modify)
+                this.getTask()
+            })
             }
     },
     mounted:function () {
@@ -281,12 +317,13 @@ export default {
             if(respons.data==null){
                 this.data = {}
             }
-            console.log(respons.data)
+            // console.log(respons.data)
             if (respons.data.tasks == this.empty){
                 this.tasks = [
                     {
                     }
                 ]
+                this.done = respons.data.done
                 if (respons.data.msg.msg_done == "None"){
                     this.msg.doneTaskMessage = "タスクはありません"
                 }
@@ -303,7 +340,6 @@ export default {
                 this.done = respons.data.done
                 this.tasks = respons.data.tasks
             }
-            console.log(respons.data.tasks)
         })
         .catch(error => {
             console.log(error)

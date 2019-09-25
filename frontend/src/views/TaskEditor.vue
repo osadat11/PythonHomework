@@ -141,7 +141,6 @@ export default {
                 if (typeof nv === "undefined"){
                     return false
                 }else{
-                    console.log(nv.replace(/\s+/g,""))
                     return !!(nv.replace(/\s+/g,""))||'空白のみの入力はできません';
                 }
             },
@@ -173,11 +172,12 @@ export default {
                 this.due_d = base.due_d
                 this.due_t = base.due_t
                 this.priority = base.priority
-                console.log(this.title,this.due_t,this.due_d,this.priority)
+                this.description = base.description
+                this.done = base.done
             }
         },
         close(){
-            // id = ''
+            this.reset()
             this.dialog = false
         },
         validate () {
@@ -192,7 +192,6 @@ export default {
         },
         addTask () {
             if(!this.validate()){
-                console.log(this.priority)
                 const path = 'http://localhost:5000/api/tasks'
                 var task = {
                     'title': this.title,
@@ -205,8 +204,6 @@ export default {
                 if (task.priority == null || task.done == null){
                     console.error("Integer property is empty or null [input error, 'done' or 'priority']")
                 }
-                // console.log(task)
-                console.log(task)
                 axios.post(path, task)
                 .then(response => {
                     console.log(response)
@@ -234,7 +231,9 @@ export default {
                 if (typeof modify.description == "undefined"){
                     modify.description = ""
                 }
-                console.log(path, modify)
+                if (modify.priority == null || modify.done == null){
+                    console.error("Integer property is empty or null [input error, 'done' or 'priority']")
+                }
                 axios.put(path, modify)
                 .then(response => {
                     console.log(response)
