@@ -19,10 +19,6 @@ class Task(db.Model):
 
     def getTaskList():
         task_list = db.session.query(Task).all()
-        # print(task_list)
-        # for task in task_list:
-        #     print(task.title)
-        # input()
         if task_list == None:
             return []
         else:
@@ -66,7 +62,7 @@ class Task(db.Model):
         base_task.due_d = record.due_d
         base_task.due_t = record.due_t
         base_task.priority = record.priority
-        base_task.due_t = record.description
+        base_task.description = record.description
         base_task.done = record.done
         db.session.commit()
         return task

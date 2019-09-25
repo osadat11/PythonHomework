@@ -12,22 +12,10 @@ def get_task_list():
     base_tasks = []
     tasks = Task.getTaskList()
     schema = TaskSchema(many=True)
-    print(tasks)
-    input()
-    print(schema.dump(tasks))
-    input()
-    # print("\n\n")
-    # print(tasks)
-    # # print(task_schema.dump(tasks))
-    # print("\n\n")
-    # FTJ(tasks)
-    # print("\n\n")
-    # input()
     allTasks = schema.dump(tasks)
     for index in range(len(allTasks)):
         if allTasks[index]['done'] == 1:
             done_tasks.append(allTasks[index])
-            print("success")
         else:
             base_tasks.append(allTasks[index])
 
