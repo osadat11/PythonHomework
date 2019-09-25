@@ -7,13 +7,13 @@
                 <span class="display-1 font-weight-bold pa-3">{{ editor }}</span>
             </v-card-title>
             <v-card-text>
-                <v-form v-model="valid">
+                <v-form v-model="valid" ref="form">
                 <v-container>
                 <v-row>
                     <v-col cols="12">
                     <v-text-field 
                         label="タイトル" 
-                        v-model="title" 
+                        v-model="title"
                         :counter="40" 
                         :rules="titleRules"
                         required
@@ -21,9 +21,10 @@
                     </v-col>
                     <v-col cols="12">
                         <v-textarea
-                            label="このタスクの詳細"
+                            label="このタスクの説明"
                             v-model="description"
-                            counter="180"
+                            :counter="180"
+                            :rules="descriptionRules"
                         ></v-textarea>
                     </v-col>
 
@@ -34,19 +35,19 @@
                             :nudge-right="40"
                             transition="scale-transition"
                             offset-y
-                            full-width
+                            
                             min-width="290px"
                         >
                             <template v-slot:activator="{ on }">
                             <v-text-field
-                                v-model="date"
+                                v-model="due_d"
                                 label="期限(日付)"
                                 v-on="on"
                                 readonly
                                 clearable
                             ></v-text-field>
                             </template>
-                            <v-date-picker v-model="date" @input="menu2 = false"></v-date-picker>
+                            <v-date-picker v-model="due_d" @input="menu2 = false"></v-date-picker>
                         </v-menu>
                     </v-col>
 
@@ -56,16 +57,16 @@
                         v-model="tmenu"
                         :close-on-content-click="false"
                         :nudge-right="40"
-                        :return-value.sync="time"
+                        :return-value.sync="due_t"
                         transition="scale-transition"
                         offset-y
-                        full-width
+                        
                         max-width="290px"
                         min-width="290px"
                     >
                         <template v-slot:activator="{ on }">
                         <v-text-field
-                            v-model="time"
+                            v-model="due_t"
                             label="期限(時間)"
                             readonly
                             clearable
@@ -74,24 +75,26 @@
                         </template>
                         <v-time-picker
                         v-if="tmenu"
-                        v-model="time"
+                        v-model="due_t"
                         format="24hr"
-                        full-width
+                        
                         scrollable
-                        @click:minute="$refs.menu.save(time)"
+                        @click:minute="$refs.menu.save(due_t)"
                         ></v-time-picker>
                     </v-menu>
                     </v-col>
 
+                    <v-subheader class="pl-2">優先度</v-subheader>
                     <v-col cols="12">
-                    <v-autocomplete
-                        v-model="tag"
-                        :items="['Skiing', 'Ice hockey', 'Soccer', 'Basketball', 'Hockey', 'Reading', 'Writing', 'Coding', 'Basejump']"
-                        label="タグ"
-                        multiple
-                        chips
-                        clearable
-                    ></v-autocomplete>
+                    <v-slider
+                        v-model="priority"
+                        :tick-labels="priorities"
+                        tick-size="4"
+                        min="1"
+                        max="4"
+                        ticks="always"
+                    >
+                    </v-slider>
                     </v-col>
                 </v-row>
                 </v-container>
@@ -100,8 +103,9 @@
             </v-card-text>
             <v-card-actions>
                 <div class="flex-grow-1"></div>
-                <v-btn color="blue darken-1" text @click="closeDialog">Close</v-btn>
-                <v-btn v-if="editor == types[1]" color="blue darken-1" text @click="addTask(); closeDialog">Save</v-btn>
+                <v-btn color="blue darken-1" text @click="reset(); close()">キャンセル</v-btn>
+                <v-btn v-if="editor == types.add" color="blue darken-1" text @click="addTask()">追加</v-btn>
+                <v-btn v-else-if="editor == types.edit" color="blue darken-1" text @click="updateTask()">保存</v-btn>
             </v-card-actions>
             </v-card>
         </v-dialog>
@@ -109,25 +113,22 @@
     </div>
 </template>
 <script>
+import axios from 'axios'
+import { isString } from 'util'
 export default {
-    name: 'Editor',
-    props: {
-        dialog: Boolean,
-        editor: String
-    },
     data: () => ({
-        
+        id: '',
         title: '',
-        discription: '',
-        time:'',
-        tag:'',
-        date: '',
-
-        types: [
-                'edit',
-                'Add'
-        ],
-
+        description: '',
+        due_t:'',
+        due_d: '',
+        priority: 0,
+        done:'',
+        editor:'',
+        types: {
+                "edit" : "タスクの編集",
+                "add" : "タスクの追加"
+            },
         menu2: false,
         tmenu: false,
         valid: false,
@@ -135,37 +136,118 @@ export default {
         titleRules: [
             v => !!v || 'タイトルは必ず入力してください',
             v => (v && v.length <= 40) || 'タイトルは40文字以内で指定してください',
-        ]
+            v => {
+                var nv = v
+                if (typeof nv === "undefined"){
+                    return false
+                }else{
+                    console.log(nv.replace(/\s+/g,""))
+                    return !!(nv.replace(/\s+/g,""))||'空白のみの入力はできません';
+                }
+            },
+            
+        ],
+        descriptionRules: [
+            // v => (v.length > 0 && v.length <= 180) || '説明は180文字以内で指定してください',
+            // v => !!(v && v.replace(/\s+/g, "")) || '空白のみの入力はできません'
+        ],
+        priorities: [
+            'なし',
+            '低',
+            '中',
+            '高'
+        ],
+        empty:""
     }),
     methods: {
-        closeDialog(){
-            this.$emit('closed');
+        open(type, base) {
+            if(base==null){
+                this.editor = type
+                this.dialog = true
+            }else{
+                this.editor = type
+                this.dialog = true
+
+                this.id = base.id
+                this.title = base.title
+                this.due_d = base.due_d
+                this.due_t = base.due_t
+                this.priority = base.priority
+                console.log(this.title,this.due_t,this.due_d,this.priority)
+            }
+        },
+        close(){
+            // id = ''
+            this.dialog = false
+        },
+        validate () {
+            if(this.$refs.form.validate()){
+                this.snackbar = true
+            }else{
+                return true
+            }
+        },
+        reset() {
+            this.$refs.form.reset()
         },
         addTask () {
-            if (this.$refs.form.validate()) {
-                this.snackbar = true
-        }
-            this.$valid.validateAll()
-            const path = 'http://localhost:5000/tasks/add'
-            var title = this.title
-            var description = this.description
-            let params = new URLSearchParams()
-            params.append('title', title.value)
-            params.append('description', description.value)
-            console.log('newTitle : ' + title.value)
-            console.log('newDesc : ' + description.value)
-            title.value = ''
-            description.value = ''
-            // axios.post(path, params)
-            //     .then(response => {
-            //         var task = {'title': titleValue, 'description': descriptionValue}
-            //         this.tasks.unshift(task)
-            //         console.log(response)
-            //     })
-            //     .catch(error => {
-            //         console.log(error)
-            //     })
-        }
-    },
+            if(!this.validate()){
+                console.log(this.priority)
+                const path = 'http://localhost:5000/api/tasks'
+                var task = {
+                    'title': this.title,
+                    'dueD': this.due_d,
+                    'dueT': this.due_t,
+                    'priority': this.priority,
+                    'description' : this.description,
+                    'done' : 0
+                }
+                if (task.priority == null || task.done == null){
+                    console.error("Integer property is empty or null [input error, 'done' or 'priority']")
+                }
+                // console.log(task)
+                console.log(task)
+                axios.post(path, task)
+                .then(response => {
+                    console.log(response)
+                    this.$emit('updated')
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.$emit('updated')
+                })
+                this.reset()
+                this.close()
+            }
+        },
+        updateTask () {
+            if(!this.validate()){
+                const path = 'http://localhost:5000/api/tasks/' + String(this.id)
+                var modify = {
+                    'title': this.title,
+                    'dueD': this.due_d,
+                    'dueT': this.due_t,
+                    'priority': this.priority,
+                    'description' : this.description,
+                    'done' : this.done
+                }
+                if (typeof modify.description == "undefined"){
+                    modify.description = ""
+                }
+                console.log(path, modify)
+                axios.put(path, modify)
+                .then(response => {
+                    console.log(response)
+                    this.close()
+                    this.$emit('updated')
+                })
+                .catch(error => {
+                    console.log(error, this.id, modify)
+                    this.$emit('updated')
+                    this.close()
+                })
+            }
+        },
+    }
 }
 </script>
