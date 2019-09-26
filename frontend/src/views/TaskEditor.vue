@@ -25,6 +25,7 @@
                             v-model="description"
                             :counter="180"
                             :rules="descriptionRules"
+                            maxlength="180"
                         ></v-textarea>
                     </v-col>
 
@@ -90,8 +91,8 @@
                         v-model="priority"
                         :tick-labels="priorities"
                         tick-size="4"
-                        min="1"
-                        max="4"
+                        min="0"
+                        max="3"
                         ticks="always"
                     >
                     </v-slider>
@@ -189,6 +190,9 @@ export default {
         },
         reset() {
             this.$refs.form.reset()
+            this.due_t = ''
+            this.due_d = ''
+            this.description = ''
         },
         addTask () {
             if(!this.validate()){
@@ -204,14 +208,16 @@ export default {
                 if (task.priority == null || task.done == null){
                     console.error("Integer property is empty or null [input error, 'done' or 'priority']")
                 }
+                console.log(task)
+                var msg = "タスク : " + this.title + "を作成しました"
                 axios.post(path, task)
                 .then(response => {
                     console.log(response)
-                    this.$emit('updated')
+                    this.$emit('updated', msg, 1)
                 })
                 .catch(error => {
                     console.log(error)
-                    this.$emit('updated')
+                    this.$emit('updated', null, 1)
                 })
                 this.reset()
                 this.close()
@@ -234,15 +240,16 @@ export default {
                 if (modify.priority == null || modify.done == null){
                     console.error("Integer property is empty or null [input error, 'done' or 'priority']")
                 }
+                var msg = "タスク : " + this.title + "を更新しました"
                 axios.put(path, modify)
                 .then(response => {
                     console.log(response)
+                    this.$emit('updated', msg, 1)
                     this.close()
-                    this.$emit('updated')
                 })
                 .catch(error => {
                     console.log(error, this.id, modify)
-                    this.$emit('updated')
+                    this.$emit('updated', null, 1)
                     this.close()
                 })
             }
