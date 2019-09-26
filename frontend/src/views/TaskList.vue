@@ -1,7 +1,7 @@
 <template>
     <div>
-        <v-sheet class="pa-5" color="grey lighten-3">
-            <v-card height="780">
+        <v-sheet class="pa-5" color="transparent">
+            <v-card height="780" elevation="11">
                 <v-card-title>
                     <v-row>
                     <span class="display-4 font-weight-black mx-4">{{Today.date}}</span>
@@ -18,7 +18,7 @@
                     </v-row>
                 </v-card-title>
 
-                <Editor ref="dialog"></Editor>
+                <Editor ref="dialog" @updated="showSnackbar"></Editor>
                 <Viewer ref="view"></Viewer>
 
                 <!-- <v-divider></v-divider> -->
@@ -28,21 +28,21 @@
                     <!-- <v-tab>テーブル</v-tab> -->
                 </v-tabs>
                 <v-tabs-items v-model="tab">
-                    <v-tab-item class="overflow-y-auto">
-                        <v-container>
+                    <v-tab-item class="overflow-y-auto pa-3">
                             <v-col cols="12" v-if="msg.taskMessage != empty">
                                 <v-alert type="info" outlined>{{ msg.taskMessage }}</v-alert>
                             </v-col>
-                            <v-list two-line subheader max-height="580">
+                            <v-list two-line subheader max-height="580" v-else>
                             <v-list-item v-for="(task, index) in tasks" :key="index" @click="showViewer(index)">
-                                <v-checkbox class="justify-center mr-2" color="teal" v-if="task.done == 1" input-value="true" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
-                                <v-checkbox exact class="justify-center mr-2" color="teal" v-if="task.done == 0" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
+                                <v-checkbox class="justify-center mr-2" color="info" v-if="task.done == 1" input-value="true" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
+                                <v-checkbox exact class="justify-center mr-2" color="info" v-if="task.done == 0" @click.stop="checkTask(tasks[index].id, index)"></v-checkbox>
                                 <v-list-item-content>
                                         <v-list-item-title class="pl-3">{{ task.title }}</v-list-item-title>
                                         <v-row>
                                             <v-col cols="9">
-                                                <v-list-item-subtitle class="pl-3" v-if="(task.due_t, task.due_t)!=empty && (task.due_t, task.due_t)!=null">期限 : {{ task.due_d }}&nbsp;&nbsp;{{ task.due_t}}</v-list-item-subtitle>
-                                                <v-list-item-subtitle class="pl-3" v-else>&nbsp;</v-list-item-subtitle>
+                                                <v-list-item-subtitle class="pl-3" v-if="task.due_d==empty&&task.due_t==empty">&nbsp;</v-list-item-subtitle>
+                                                <v-list-item-subtitle class="pl-3" v-else-if="task.due_d==null || task.due_d==empty">期限 : {{ task.due_t}}</v-list-item-subtitle>
+                                                <v-list-item-subtitle class="pl-3" v-else>期限 : {{ task.due_d }}&nbsp;&nbsp;{{ task.due_t}}</v-list-item-subtitle>
                                             </v-col>
                                             <v-col cols="3">
                                                 <span v-if="task.priority==priCase.c0" class="body-2 ">&nbsp;</span>
@@ -57,23 +57,21 @@
                                     <v-btn ref="btn" top icon @click.stop="showDialog('タスクの編集', index)">
                                         <v-icon>mdi-pencil</v-icon>
                                     </v-btn>
-                                    <Editor ref="dialog" @updated="getTask()"></Editor>
+                                    <Editor ref="dialog" @updated="showSnackbar"></Editor>
                                 </v-list-item-action>
                             </v-list-item>
                                 </v-list>
-                            </v-container>
                         </v-tab-item>
 
                     <!--完了済みタスクの画面-->
-                    <v-tab-item class="overflow-y-auto">
-                        <v-container>
-                            <v-list two-line subheader max-height="580">
+                    <v-tab-item class="overflow-y-auto pa-3">
                             <v-col cols="12" v-if="msg.doneTaskMessage != empty">
                                 <v-alert type="info" outlined>{{ msg.doneTaskMessage }}</v-alert>
                             </v-col>
+                            <v-list two-line subheader max-height="580">
                             <v-list-item v-for="(task, index) in done" :key="index" @click="showViewer(index, true)">
-                                <v-checkbox class="justify-center mr-2" color="teal" v-if="task.done == 1" input-value="true" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
-                                <v-checkbox exact class="justify-center mr-2" color="teal" v-if="task.done == 0" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
+                                <v-checkbox class="justify-center mr-2" color="info" v-if="task.done == 1" input-value="true" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
+                                <v-checkbox exact class="justify-center mr-2" color="info" v-if="task.done == 0" @click.stop="checkTask(task.id, index, true)"></v-checkbox>
                                 <v-list-item-content>
                                     <v-list-item-title class="pl-3">{{ task.title }}</v-list-item-title>
                                     <v-row>
@@ -91,20 +89,28 @@
                                 <v-divider></v-divider>
                             </v-list-item-content>
                             <v-list-item-action class="align-center justify-center action">
-                                <v-btn ref="btn" top icon @click.stop="deleteTask(task.id)">
+                                <v-btn ref="btn" top icon @click.stop="deleteTask(task.id, task.title)">
                                     <v-icon>mdi-trash-can</v-icon>
                                 </v-btn>
-                                <Editor ref="dialog" @updated="getTask()"></Editor>
                             </v-list-item-action>
                             </v-list-item>
                                 </v-list>
-                        </v-container>
                     </v-tab-item>
                 </v-tabs-items>
-
-                
             </v-card>
         </v-sheet>
+        <v-snackbar
+        v-model="snackbar"
+        >
+        {{ appMSG }}
+        <v-btn
+            color="info"
+            text
+            @click="snackbar = false"
+        >
+            閉じる
+        </v-btn>
+        </v-snackbar>
     </div>
 </template>
 
@@ -117,10 +123,12 @@ var today = new Date()
 export default {
     data () {
         return {
+            appMSG:'',
             msg : {
                 taskMessage: '',
                 doneTaskMessage: ''
             },
+            snackbar: false,
             tasks: '',
             done: '',
             selected: [],
@@ -178,7 +186,18 @@ export default {
         Editor,
         Viewer
     },
-    methods: { 
+    methods: {
+        showSnackbar: function(text, type){
+            if(text!=null){
+                if(type==1){
+                    this.getTask()
+                }
+                this.appMSG = text
+                this.snackbar = true
+            }else[
+                console.log("!!!")
+            ]
+        },
         showDialog: function (type, set, done) {
             if(done == false || done == null){
                 if(set==null){
@@ -267,20 +286,33 @@ export default {
             .then(respons => {
                 console.log(respons.data)
                 if(respons.data==null){
-                    this.data = {}
+                this.data = {}
+            }
+            // console.log(respons.data)
+            if (respons.data.tasks == this.empty){
+                this.tasks = [
+                ]
+                this.done = respons.data.done
+                if (respons.data.msg.msg_done == "None"){
+                    this.msg.doneTaskMessage = "タスクはありません"
                 }
-                    if (respons.data.msg.msg_done == "None"){
-                        this.msg.doneTaskMessage = "タスクはありません"
-                    }
-                    if (respons.data.msg.msg_task == "None"){
-                        this.msg.taskMessage = "タスクはありません"
-                    }
-                    this.done = respons.data.done
-                    this.tasks = respons.data.tasks
-            })
-            .catch(error => {
-                console.log(error)
-            })
+                if (respons.data.msg.msg_task == "None"){
+                    this.msg.taskMessage = "タスクはありません"
+                }
+            }else{
+                if (respons.data.msg.msg_done == "None"){
+                    this.msg.doneTaskMessage = "タスクはありません"
+                }
+                if (respons.data.msg.msg_task == "None"){
+                    this.msg.taskMessage = "タスクはありません"
+                }
+                this.done = respons.data.done
+                this.tasks = respons.data.tasks
+            }
+        })
+        .catch(error => {
+            console.log(error)
+        })
         },
         checkTask (terget, index, done) {
             const path = 'http://localhost:5000/api/tasks/' + String(terget)
@@ -304,11 +336,14 @@ export default {
                     'done' : this.done[index].done
                 }
             }
+            var msg = modify.title
             if(modify.done == 0){
                 modify.done = 1
+                var toDone = true
             }
             else{
                 modify.done = 0
+                var toDone = false
             }
             // console.log(path, modify)
             if (typeof modify.description == "undefined"){
@@ -317,9 +352,14 @@ export default {
             if (modify.priority == null || modify.done == null){
                 console.error("Integer property is empty or null [input error, 'done' or 'priority']")
             }
+            if(toDone){
+                var res = "タスク : " + msg + "をチェックしました" 
+            }else{
+                var res = "タスク : " + msg + "からチェックを外しました" 
+            }
             axios.put(path, modify)
             .then(response => {
-                // console.log(response)
+                this.showSnackbar(res)
                 this.getTask()
             })
             .catch(error => {
@@ -327,13 +367,15 @@ export default {
                 this.getTask()
             })
         },
-        deleteTask: function(id){
+        deleteTask: function(id, msg){
             const path = 'http://localhost:5000/api/tasks/' + String(id)
             this.msg.taskMessage = ""
             this.msg.doneTaskMessage = ""
             axios.delete(path)
             .then(response => {
                     console.log("done_task[ id : ", id, "] ====> delete")
+                    var res = "タスク : " + msg + "を削除しました" 
+                    this.showSnackbar(res)
                     console.log(response)
                     this.getTask()
                 })

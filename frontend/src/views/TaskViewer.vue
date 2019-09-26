@@ -2,38 +2,38 @@
     <div>
         <v-row justify="center">
         <v-dialog v-model="dialog" persistent max-width="600px">
-            <v-card>
-            <v-card-title>
-                タスクの詳細
-            </v-card-title>
+            <v-card class="mx-auto">
+                <v-img
+                    class="white--text"
+                    height="200"
+                    style="background-image: linear-gradient(to top, #4481eb 0%, #04befe 100%);"
+                >
+                    <v-card-title class="display-1 align-end fill-height font-weight-bold">
+                        {{ this.title }}
+                    </v-card-title>
+                </v-img>
             <v-card-text>
                 <v-container>
                 <v-row>
-                    <v-col cols="12">
-                    <v-text-field 
-                        label="タイトル" 
-                        v-model="title" 
-                        ></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                        <v-textarea
-                            label="このタスクの説明"
-                            v-model="description"
-                            :counter="180"
-                            editable=false
-                        ></v-textarea>
-                    </v-col>
+                    <v-card-text>
+                        <span>タスクの説明</span><br>
+                        <span class="text--primary body-1">{{ this.description }}</span>
+                    </v-card-text>
 
-                    <v-col cols="12">
-                        <v-list-item-title class="pl-3">{{ this.title }}</v-list-item-title>
-                        <v-list-item-subtitle class="pl-3" v-if="(this.due_t, this.due_t)!=empty && (this.due_t, this.due_t)!=null">期限 : {{ this.due_d }}&nbsp;&nbsp;{{ this.due_t}}</v-list-item-subtitle>
-                        <v-list-item-subtitle class="pl-3" v-else>&nbsp;</v-list-item-subtitle>
-                    </v-col>
+                    <v-card-text>
+                        <span>タスクの期限</span><br>
+                        <span v-if="this.due_d!=null" class="text--primary">~&nbsp;</span>
+                        <span class="text--primary body-1">{{this.due_d}}&nbsp;{{this.due_t}}</span>
 
-                    <v-subheader class="pl-2">優先度</v-subheader>
-                    <v-col cols="12">
-                        {{ this.priority }}
-                    </v-col>
+                    </v-card-text>
+
+                    <v-card-text>
+                        <span>優先度</span><br>
+                        <span v-if="this.priority==0" color="" class="text--primary font-weight-thin">{{this.priorities[this.priority]}}</span>
+                        <span v-else-if="this.priority==1" class="cyan--text text--accebt-3 font-weight-thin display-1">{{this.priorities[this.priority]}}</span>
+                        <span v-else-if="this.priority==2" class="orange--text text--accent-4 font-weight-thin display-1">{{this.priorities[this.priority]}}</span>
+                        <span v-else-if="this.priority==3" class="red--text text--accent-3 font-weight-thin display-1">{{this.priorities[this.priority]}}</span>
+                    </v-card-text>
                 </v-row>
                 </v-container>
                 <v-divider></v-divider>
@@ -49,6 +49,7 @@
 </template>
 <script>
 import axios from 'axios'
+import moment from 'moment'
 import { isString } from 'util'
 export default {
     data: () => ({
@@ -61,7 +62,7 @@ export default {
         done:'',
         dialog : false,
         priorities: [
-            'なし',
+            '指定なし',
             '低',
             '中',
             '高'
@@ -74,7 +75,10 @@ export default {
 
             this.id = data.id
             this.title = data.title
-            this.due_d = data.due_d
+            if(data.due_d != ""){
+                var afterDate = moment(data.due_d).format('YYYY年MM月DD日')
+            }
+            this.due_d = afterDate
             this.due_t = data.due_t
             this.priority = data.priority
             this.description = data.description
