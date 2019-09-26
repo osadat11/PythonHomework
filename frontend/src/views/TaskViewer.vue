@@ -25,8 +25,8 @@
                     </v-col>
 
                     <v-col cols="12">
-                        <v-list-item-title class="pl-3">{{ task.title }}</v-list-item-title>
-                        <v-list-item-subtitle class="pl-3" v-if="(task.due_t, task.due_t)!=empty && (task.due_t, task.due_t)!=null">期限 : {{ task.due_d }}&nbsp;&nbsp;{{ task.due_t}}</v-list-item-subtitle>
+                        <v-list-item-title class="pl-3">{{ this.title }}</v-list-item-title>
+                        <v-list-item-subtitle class="pl-3" v-if="(this.due_t, this.due_t)!=empty && (this.due_t, this.due_t)!=null">期限 : {{ this.due_d }}&nbsp;&nbsp;{{ this.due_t}}</v-list-item-subtitle>
                         <v-list-item-subtitle class="pl-3" v-else>&nbsp;</v-list-item-subtitle>
                     </v-col>
 
@@ -60,10 +60,6 @@ export default {
         priority: 0,
         done:'',
         dialog : false,
-        descriptionRules: [
-            // v => (v.length > 0 && v.length <= 180) || '説明は180文字以内で指定してください',
-            // v => !!(v && v.replace(/\s+/g, "")) || '空白のみの入力はできません'
-        ],
         priorities: [
             'なし',
             '低',
@@ -74,20 +70,29 @@ export default {
     }),
     methods: {
         open(data) {
-            this.editor = type
             this.dialog = true
 
-            this.id = base.id
-            this.title = base.title
-            this.due_d = base.due_d
-            this.due_t = base.due_t
-            this.priority = base.priority
-            this.description = base.description
-            this.done = base.done
+            this.id = data.id
+            this.title = data.title
+            this.due_d = data.due_d
+            this.due_t = data.due_t
+            this.priority = data.priority
+            this.description = data.description
+            this.done = data.done
         },
         close(){
             this.reset()
             this.dialog = false
+        },
+        reset(){
+            this.id = null
+            this.title = null
+            this.due_d = null
+            this.due_t = null
+            this.priority = null
+            this.description = null
+            this.done = null
+            return 0
         }
     }
 }

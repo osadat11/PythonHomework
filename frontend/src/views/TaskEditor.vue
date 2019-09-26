@@ -25,6 +25,7 @@
                             v-model="description"
                             :counter="180"
                             :rules="descriptionRules"
+                            maxlength="180"
                         ></v-textarea>
                     </v-col>
 
@@ -90,8 +91,8 @@
                         v-model="priority"
                         :tick-labels="priorities"
                         tick-size="4"
-                        min="1"
-                        max="4"
+                        min="0"
+                        max="3"
                         ticks="always"
                     >
                     </v-slider>
