@@ -1,9 +1,9 @@
 webenv2
+trash
+MEMO
 /.vscode
-
 /backend/test
 /memo
-/backend_n
 tasks_old.db
 
 # Byte-compiled / optimized / DLL files
