@@ -47,7 +47,6 @@ class Task(db.Model):
 
         return msg
 
-
     def updateTask(task, taskID):
         record = Task(
             title=task['title'],

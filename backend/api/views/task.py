@@ -6,6 +6,7 @@ import json
 
 task_router = Blueprint('task_router', __name__)
 
+
 @task_router.route('/tasks', methods=['GET'])
 def get_task_list():
     done_tasks = []
@@ -26,16 +27,17 @@ def get_task_list():
         msg1 = "None"
     if done_tasks == []:
         msg2 = "None"
-    
+
     return make_response(jsonify({
         'code': 200,
         'tasks': base_tasks,
         'done': done_tasks,
         'msg': {
             "msg_task": msg1,
-            "msg_done" : msg2
+            "msg_done": msg2
         }
     }))
+
 
 @task_router.route('/tasks', methods=['POST'])
 def registTask():
@@ -43,23 +45,24 @@ def registTask():
     taskData = json.loads(jsonData)
     print(taskData)
 
-
     task = Task.registTask(taskData)
     task_schema = TaskSchema(many=True)
 
     return make_response(jsonify({
         'code': 200,
-        'task' : task
+        'task': task
     }))
+
 
 @task_router.route('/tasks/<int:id>', methods=['DELETE'])
 def deleteTask(id):
     msg = Task.destroyTask(id)
-    print("id : " + str(id) +"  " + str(msg) + " ===> deleted")
+    print("id : " + str(id) + "  " + str(msg) + " ===> deleted")
     return make_response(jsonify({
         'code': 200,
-        'msg' : "task : " + str(msg) + " is deleted"
+        'msg': "task : " + str(msg) + " is deleted"
     }))
+
 
 @task_router.route('/tasks/<int:id>', methods=['PUT'])
 def updateTask(id):
@@ -72,5 +75,5 @@ def updateTask(id):
 
     return make_response(jsonify({
         'code': 200,
-        'task' : task
+        'task': task
     }))
