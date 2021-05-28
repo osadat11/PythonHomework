@@ -10,15 +10,15 @@
 <script>
 import Header from "./components/Header"
 export default {
-  name: 'App',
+  name: "App",
   components: {
     Header
   }
-};
+}
 </script>
 
 <style>
 #app {
-  background-image: linear-gradient(-225deg, #FFFEFF 0%, rgb(233, 233, 233) 100%);
+  background-color: #eeeeee;
 }
 </style>
