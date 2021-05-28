@@ -1,5 +1,6 @@
-# PythonHomework
-  授業用課題のリポジトリです
+# TMS
+----- **T**ask**M**anagement**S**ystem -----  
+授業用課題のリポジトリです
 
 ## 概要
 　flaskを用いてタスク管理アプリ用のapiを作りました。
