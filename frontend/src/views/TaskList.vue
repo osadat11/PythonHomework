@@ -199,6 +199,7 @@ export default {
             ]
         },
         showDialog: function (type, set, done) {
+            console.log("hi")
             if(done == false || done == null){
                 if(set==null){
                     console.log("Editor : Add mode")

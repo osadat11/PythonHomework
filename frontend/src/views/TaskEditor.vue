@@ -208,11 +208,9 @@ export default {
                 if (task.priority == null || task.done == null){
                     console.error("Integer property is empty or null [input error, 'done' or 'priority']")
                 }
-                console.log(task)
                 var msg = "タスク : " + this.title + "を作成しました"
                 axios.post(path, task)
                 .then(response => {
-                    console.log(response)
                     this.$emit('updated', msg, 1)
                 })
                 .catch(error => {
